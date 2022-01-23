@@ -9,3 +9,5 @@ Ideas
   * Can probably use a pretrained keypoint detector
 * Climbing hold segmentation. Given an image of a climb show which holds belong to which routes
   * Shouldn't be too bad. Most annoying part is collecting data
+* Recommend beta on a route based on an image
+  * Use keypoint data taken from different images to learn how routes should be climbed?
