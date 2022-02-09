@@ -3,7 +3,8 @@ import sys
 import cv2
 import numpy as np
 from climbing_thing.climbnet import ClimbNet
-from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions, show_masks, imshow
+from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions, show_masks
+from climbing_thing.utils.image import imshow
 
 
 def show_instances_and_binary_masks(input_image, output):

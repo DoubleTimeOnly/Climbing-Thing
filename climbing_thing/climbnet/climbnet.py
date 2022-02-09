@@ -13,8 +13,8 @@ from .configs.model_params import model_params
 
 class Instances:
     """Unwrap detectron2's Mask-RCNN output"""
-    def __init__(self, model_output: dict):
-        self.instances = model_output['instances']
+    def __init__(self, model_output):
+        self.instances = model_output
         self.boxes = self.instances.get("pred_boxes")
         self.scores = self.instances.get("scores")
         self.classes = self.instances.get("pred_classes")
@@ -32,6 +32,9 @@ class Instances:
             mask = np.array(mask.long()).astype(np.float32)
             output_mask += mask
         return output_mask
+
+    def __len__(self):
+        return len(self.instances)
 
 
 class ClimbNet:
@@ -51,7 +54,7 @@ class ClimbNet:
     def __call__(self, image: np.ndarray) -> Instances:
         """Runs detectron2 Mask-RCNN for instance segmentation"""
         outputs = self.predictor(image)
-        return Instances(outputs)
+        return Instances(outputs["instances"])
 
     def setup_config(self, model_params: dict):
         config = get_cfg()

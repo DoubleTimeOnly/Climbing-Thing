@@ -1,8 +1,8 @@
 from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.data import Metadata
-import cv2
 import numpy as np
 from ..climbnet import Instances
+from ...utils.image import imshow
 
 
 def draw_instance_predictions(
@@ -29,11 +29,3 @@ def show_masks(model_output: Instances, scale=1.0):
         mask = np.array(mask.long(), dtype=np.float32)
         imshow("masks", mask, scale=scale)
 
-
-def imshow(window_name: str, image: np.ndarray, scale: float = 1.0, delay=0):
-    output = image.copy()
-    if scale != 1.0:
-        output = cv2.resize(output, dsize=(0, 0), fx=scale, fy=scale)
-    cv2.imshow(window_name, output)
-    if delay >= 0:
-        cv2.waitKey(delay)
