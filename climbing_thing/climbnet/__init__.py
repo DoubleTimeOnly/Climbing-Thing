@@ -1,1 +1,1 @@
-from .climbnet import ClimbNet
+from .climbnet import ClimbNet, Instances

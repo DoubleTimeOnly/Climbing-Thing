@@ -12,5 +12,5 @@ class TestClimbNet(TestCase):
 
     def test_forward_pass(self):
         model = ClimbNet(model_path=self.default_weights, device="cuda")
-        mask = model(self.test_image)
+        instances = model(self.test_image)
 
