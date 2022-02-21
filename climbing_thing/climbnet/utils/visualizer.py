@@ -13,10 +13,10 @@ def draw_instance_predictions(
 ) -> np.ndarray:
     """Draw instances overlaid on input image"""
     viz = Visualizer(
-        image[..., ::-1],
+        image, # [..., ::-1],
         metadata=train_metadata,
         scale=scale,
-        instance_mode=ColorMode.IMAGE_BW
+        instance_mode = ColorMode.SEGMENTATION
     )
     instance_viz = viz.draw_instance_predictions(model_output.instances.to('cpu'))
     return instance_viz.get_image()
