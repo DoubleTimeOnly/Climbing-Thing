@@ -1,16 +1,15 @@
-import sys
-
 import cv2
 
-from climbing_thing.route import Route
 from climbing_thing.climbnet import ClimbNet
 from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions
+from climbing_thing.route.hue_difference import HueDifference
 from climbing_thing.utils.image import imshow
 
 route_rgb_colors = {
     "pink": (183, 77, 99),
     "orange": (190, 81, 63),
-    "green": (57, 96, 64)
+    "green": (57, 96, 64),
+    "white": (170, 170, 170)
 }
 
 def segment_route():
@@ -18,26 +17,23 @@ def segment_route():
     parser = argparse.ArgumentParser(description='Climbnet demo')
     parser.add_argument('--image_path', type=str,
                         required=False,
+                        default="climbnet/test.png",
                         help='image file')
     args = parser.parse_args()
 
     # Read image
-    if len(sys.argv) <= 1:
-        image_path = "climbnet/test.png"
-    else:
-        image_path = args.image_path
-    test_image = cv2.imread(image_path)
+    test_image = cv2.imread(args.image_path)
 
     model = init_climbnet()
-    output = model(test_image)
-    route = Route(
-        route_image=test_image,
-        holds=output,
-        route_color=route_rgb_colors["pink"]
-    )
-    imshow("route image", route.get_masked_route(), scale=0.3, delay=-1)
-    instance_image = draw_instance_predictions(test_image, route.holds, model.metadata)
-    imshow("instances", instance_image, scale=0.3)
+    hold_instances = model(test_image)
+
+    route_segmentor = HueDifference(route_rgb_colors["white"], 15.0)
+    route_instances = route_segmentor.segment_route(test_image, hold_instances)
+
+    instance_image = draw_instance_predictions(test_image, route_instances, model.metadata)
+    cv2.namedWindow("original image", cv2.WINDOW_NORMAL)
+    cv2.imshow("original image", test_image)
+    imshow("instances", instance_image)
 
 
 def init_climbnet():
