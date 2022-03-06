@@ -21,9 +21,28 @@ Given all holds on a wall, assign each hold to their respective route
 * #### Average Hue Similarity
     * Not that robust
     * After testing this method can't differentiate between white, black, and the other colors, probably because those are hue independent.
-* #### Clustering (on HSV histograms)
-    * ##### K-means with searching for K
-    * ##### DBSCAN
+        * After more testing, seems like it can't differentiate between any colors. (it's late though, so idk...)
+        * Did not vary the hue threshold in testing
+* #### Clustering 
+    * on hold HSV histograms
+        * ##### K-means with defined K
+            * fewer bins (~10) seems more robust (maybe?)
+            * bin count seems finiky (We do not understand its effect)
+        * ##### K-means with searching for K
+            * 
+        * ##### DBSCAN
+            * Always gave one cluster independent of epsilon.
+            * learn to use better... ("git gud" -Victor)
+    * on hold HSV averages
+        * ##### K-means with defined K
+            * unable to segmnet routes in any meaningful way. effectively randomly selects holds
+            * Could be fun route generator  
+                * or just use random selector?
+        * ##### K-means with searching for K
+            * 
+        * ##### DBSCAN
+            * 
 * #### Hammer time
     * #### Weakly supervised clustering network
     * #### Metric learning?
+    * Support Vector Machine (SVM)

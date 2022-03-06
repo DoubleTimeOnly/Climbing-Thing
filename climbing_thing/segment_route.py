@@ -2,6 +2,7 @@ import cv2
 
 from climbing_thing.climbnet import ClimbNet
 from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions
+from climbing_thing.route.histogram_clustering import HistogramClustering
 from climbing_thing.route.hue_difference import HueDifference
 from climbing_thing.utils.image import imshow
 
@@ -27,14 +28,24 @@ def segment_route():
     model = init_climbnet()
     hold_instances = model(test_image)
 
-    route_segmentor = HueDifference(route_rgb_colors["white"], 15.0)
-    route_instances = route_segmentor.segment_route(test_image, hold_instances)
+    # this is the orange start hold in test2.png
+    # target_hold = hold_instances.instances[77]
 
-    instance_image = draw_instance_predictions(test_image, route_instances, model.metadata)
-    cv2.namedWindow("original image", cv2.WINDOW_NORMAL)
-    cv2.imshow("original image", test_image)
-    imshow("instances", instance_image)
+    # route_segmentor = HistogramClustering(target_hold)
+    # for i in range(7):        
+    #     route_instances = route_segmentor.segment_route(test_image, hold_instances, i)
+    #     instance_image = draw_instance_predictions(test_image, route_instances, model.metadata)
+    #     cv2.namedWindow("original image", cv2.WINDOW_NORMAL)
+    #     cv2.imshow("original image", test_image)
+    #     imshow("instances", instance_image)
 
+    for color_name, color in route_rgb_colors.items():
+        route_segmentor = HueDifference(color, 15)
+        route_instances = route_segmentor.segment_route(test_image, hold_instances)
+        instance_image = draw_instance_predictions(test_image, route_instances, model.metadata)
+        cv2.namedWindow("original image", cv2.WINDOW_NORMAL)
+        cv2.imshow("original image", test_image)
+        imshow(f"instances ({color_name})", instance_image)
 
 def init_climbnet():
     default_weights = "climbnet/weights/model_d2_R_50_FPN_3x.pth"

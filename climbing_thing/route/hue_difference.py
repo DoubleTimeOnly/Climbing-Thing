@@ -12,8 +12,8 @@ class HueDifference:
         """
         self.route_color_rgb = route_color
         self.hue_difference_threshold = hue_difference_threshold
-        rgb_color = np.array([[route_color]], dtype=np.uint8)[..., ::-1]
-        hsv_color = cv2.cvtColor(rgb_color, cv2.COLOR_BGR2HSV)
+        bgr_color = np.array([[route_color]], dtype=np.uint8)[..., ::-1]
+        hsv_color = cv2.cvtColor(bgr_color, cv2.COLOR_BGR2HSV)
         self.route_color_hsv = hsv_color[0, 0]
 
     def segment_route(self, image, holds) -> Instances:
@@ -35,8 +35,6 @@ class HueDifference:
         return Instances(holds.instances[route_hold_idxs])
 
     def hold_is_on_route(self, hsv_image, hold_mask):
-        # TODO: take into account hue wrapping at 180
-
         hues = hsv_image[..., 0]
         masked_hues = hues[hold_mask[..., 0] > 0]
         rad_mean = self.circular_mean(np.deg2rad(masked_hues))
