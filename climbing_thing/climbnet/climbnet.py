@@ -31,6 +31,7 @@ class Instances:
             mask = mask.to('cpu')
             mask = np.array(mask.long()).astype(np.float32)
             output_mask += mask
+        output_mask = np.clip(output_mask, 0, 1)
         return output_mask
 
     def __len__(self):
