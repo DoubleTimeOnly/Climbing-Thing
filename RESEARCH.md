@@ -23,6 +23,11 @@ Given all holds on a wall, assign each hold to their respective route
     * After testing this method can't differentiate between white, black, and the other colors, probably because those are hue independent.
         * After more testing, seems like it can't differentiate between any colors. (it's late though, so idk...)
         * Did not vary the hue threshold in testing
+        
+* #### Distance Metrics to try:
+    * KL divergence (apparently not a true metric)
+    * Jensen-Shannon metric
+    * Earth Mover Distance 
 * #### Clustering 
     * on hold HSV histograms
         * ##### K-means with defined K
