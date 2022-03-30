@@ -83,6 +83,11 @@ def compute_cartesian_difference(route_image: np.ndarray, holds: Instances, colo
 
         output = compute_hsv_histogram(hsv_image, bins=params["bins"], mask=mask, mode="np", max_values=color_space)
         (h_hist, h_edges), (s_hist, s_edges), (v_hist, v_edges) = output
+        n = 11
+        kernel = [1/n for i in range(n)]
+        h_hist = np.convolve(h_hist, kernel)
+        s_hist = np.convolve(s_hist, kernel)
+        v_hist = np.convolve(v_hist, kernel)
         feature_vector1 = np.concatenate([h_hist, s_hist, v_hist], axis=0)
         hold_histograms.append(feature_vector1)
     hold_histograms = np.array(hold_histograms, dtype=np.float32)
