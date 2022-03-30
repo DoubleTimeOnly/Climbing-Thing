@@ -1,20 +1,55 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import torch
-
-from climbing_thing.climbnet import Instances
 import cv2
 import numpy as np
-
-from climbing_thing.utils.distancemetrics import compute_hsv_histogram, l2_norm, l1_norm, linf_norm, cosine_similarity
 import matplotlib.pyplot as plt
+from scipy.spatial.distance import pdist
+import math
+
+from climbing_thing.climbnet import Instances
+from climbing_thing.utils.distancemetrics import compute_hsv_histogram, l2_norm, l1_norm, linf_norm, cosine_similarity
+import logging
 
 DISTANCES = {
-    'l2_norm': l2_norm,
-    'l1_norm': l1_norm,
-    'linf_norm': linf_norm,
-    'cosine similarity': cosine_similarity,
+    'l1_norm': {"metric": "minkowski", "p": 1},
+    'l2_norm': {"metric": "minkowski", "p": 2},
+    # 'linf_norm': linf_norm,
+    'cosine similarity': {"metric": "cosine"},
 }
+
+
+class DistanceMatrix:
+    def __init__(self, distances: np.ndarray, num_observations: int):
+        """
+        :param distances: distances from scipy pdist
+        """
+        self.distances = distances
+        self.num_observations = num_observations
+
+    def get_item(self, row: int, col: Union[int, List]) -> Union[int, List]:
+        """
+        Return the distance between distances[row] and distances[col]
+        :param row, col: indices of entries to get distance of. Col can be a list of indices to return a list of distances
+        """
+        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html
+        if isinstance(col, int):
+            return self.unroll_entry(row, col)
+
+        elif isinstance(col, List):
+            return [self.unroll_entry(row, c) for c in col]
+
+    def unroll_entry(self, row: int, col: int):
+        if row >= self.num_observations or col >= self.num_observations:
+            raise IndexError(f"Invalid indices {row, col} for matrix of length {len(self.distances)}")
+        if row == col:
+            # logging.warning(f"Warning: pdist does not calculate distance between the same vertices. Returning 0 by default")
+            return 0
+        i = min(row, col) if row != col else row
+        j = max(row, col) if row != col else col
+        entry = self.num_observations * i + j - ((i + 2) * (i + 1)) // 2
+        return self.distances[entry]
+
 
 def get_masked_image(image: np.ndarray, mask: torch.tensor):
     mask = np.array(mask.long()).astype(np.uint8)
@@ -28,23 +63,36 @@ def write_csv(csv_list: List, distance_name: str):
         csv_file.write(text)
 
 
+def compute_cartesian_difference(route_image: np.ndarray, holds: Instances, color_space="hsv"):
+    color_spaces = {
+        "hsv": {"conversion": cv2.COLOR_BGR2HSV, "bins": 180},
+        "lab": {"conversion": cv2.COLOR_BGR2LAB, "bins": 256},
+    }
+    params = color_spaces[color_space]
+    image = route_image#.astype(np.float32)
+    hsv_image = cv2.cvtColor(image, params["conversion"])
+    # cv2.imshow("Controller", np.random.random((200, 200)))
 
-def compute_cartesian_difference(route_image: np.ndarray, holds: Instances):
-    hsv_image = cv2.cvtColor(route_image, cv2.COLOR_BGR2HSV)
-    cv2.imshow("Controller", np.random.random((200, 200)))
+    # csv_dict = {metric: [] for metric in DISTANCES}
+    computed_distances = {}
 
-    csv_dict = {metric: [] for metric in DISTANCES}
-
+    hold_histograms = []
     for idx, mask in enumerate(holds.masks):
-        print(f"Outer Hold: {idx}")
         mask = mask.to("cpu")
         mask = np.array(mask.long()).astype(np.uint8)
 
-        (h_hist, h_edges), (s_hist, s_edges), (v_hist, v_edges) = compute_hsv_histogram(hsv_image, bins=180, mask=mask, mode="np")
-
+        output = compute_hsv_histogram(hsv_image, bins=params["bins"], mask=mask, mode="np", max_values=color_space)
+        (h_hist, h_edges), (s_hist, s_edges), (v_hist, v_edges) = output
         feature_vector1 = np.concatenate([h_hist, s_hist, v_hist], axis=0)
+        hold_histograms.append(feature_vector1)
+    hold_histograms = np.array(hold_histograms, dtype=np.float32)
 
-        all_distances = {}
+    for metric, kwargs in DISTANCES.items():
+        distances = pdist(hold_histograms, **kwargs)
+        computed_distances[metric] = DistanceMatrix(distances, len(hold_histograms))
+
+    return computed_distances
+
 
 
 

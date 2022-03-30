@@ -9,6 +9,8 @@ from climbing_thing.route.histogram_clustering import HistogramClustering
 from climbing_thing.route.hue_difference import HueDifference
 from climbing_thing.utils.distancemetrics import compute_hsv_histogram
 from climbing_thing.utils.image import imshow
+from climbing_thing.route.compareholds import DistanceMatrix
+from climbing_thing.utils.performancemetrics import PerformanceMetrics
 
 route_rgb_colors = {
     "pink": (183, 77, 99),
@@ -64,7 +66,24 @@ def compare_holds():
     model = init_climbnet()
     hold_instances = model(test_image)
 
-    compute_cartesian_difference(test_image, hold_instances)
+    all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="lab")
+
+    for metric, distances in all_distances.items():
+        truth_0 = [0, 4, 6, 10, 19, 31, 39, 45, 55, 57, 59, 60, 63]
+        averages = {"f1": 0}
+        for hold_idx in truth_0:
+            # distances = all_distances["l2_norm"]
+            dists = distances.get_item(hold_idx, list(range(len(hold_instances))))
+
+            top_n = np.argsort(dists)[:len(truth_0)]
+            performance = PerformanceMetrics(truth=truth_0, prediction=set(top_n))
+            # print(f"hold {hold_idx} {metric}: {performance}")
+
+            averages["f1"] += performance.f1
+
+        for stat in averages:
+            averages[stat] /= len(truth_0)
+            print(f"{metric} average {stat}: {averages[stat]}")
 
 
 def save_instances_with_idx():
@@ -114,6 +133,6 @@ def save_histogram_instances_with_idx():
 
 if __name__ == '__main__':
     # segment_route()
-    # compare_holds()
+    compare_holds()
     # save_instances_with_idx()
-    save_histogram_instances_with_idx()
+    # save_histogram_instances_with_idx()
