@@ -16,6 +16,14 @@
     * Uses opencv's Canny edge detector and SimpleBlobDetector
     * Cool intro/exploratory document: https://github.com/scsukas8/NeuralClimb/blob/master/Current%20Progress.pdf
 
+## Future Ideas (Next PP Session)
+* Human keypoint detection from climbing video
+* Different image formats (RGB, HSV, etc.), and compare
+* Different data representation (not histograms)
+* Automate evaluation of clustering algorithms using different metrics
+    * could use basic ranking or actual clustering
+
+
 ## Ideas for Route Segmentation
 Given all holds on a wall, assign each hold to their respective route
 * #### Average Hue Similarity
@@ -27,7 +35,11 @@ Given all holds on a wall, assign each hold to their respective route
 * #### Distance Metrics to try:
     * KL divergence (apparently not a true metric)
     * Jensen-Shannon metric
-    * Earth Mover Distance 
+    * Earth Mover Distance
+
+    All of these were not much better than cosine similarity, and EMD might have been even worse.
+* #### Histogram Bin Count
+     Varying bin count (180 vs 18) showed no large difference in ranking ability for the various distance metrics. For example with 180 bins cosine similiarity did better at ranking purple, but JSM was better with 18 bins. 
 * #### Clustering 
     * on hold HSV histograms
         * ##### K-means with defined K

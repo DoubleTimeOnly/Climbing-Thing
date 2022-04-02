@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,7 +10,6 @@ from climbing_thing.route.histogram_clustering import HistogramClustering
 from climbing_thing.route.hue_difference import HueDifference
 from climbing_thing.utils.distancemetrics import compute_hsv_histogram
 from climbing_thing.utils.image import imshow
-from climbing_thing.route.compareholds import DistanceMatrix
 from climbing_thing.utils.performancemetrics import PerformanceMetrics
 
 route_rgb_colors = {
@@ -73,7 +73,7 @@ def compare_holds():
         averages = {"f1": 0}
         for hold_idx in truth_0:
             # distances = all_distances["l2_norm"]
-            dists = distances.get_item(hold_idx, list(range(len(hold_instances))))
+            dists = distances[hold_idx, list(range(len(hold_instances)))]
 
             top_n = np.argsort(dists)[:len(truth_0)]
             performance = PerformanceMetrics(truth=truth_0, prediction=set(top_n))

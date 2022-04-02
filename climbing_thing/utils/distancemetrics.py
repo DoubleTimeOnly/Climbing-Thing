@@ -3,7 +3,6 @@ from typing import List, Union
 import cv2
 import numpy as np
 from numpy.linalg import norm
-import scipy
 
 
 def l2_norm(array1: np.ndarray, array2: np.ndarray):

@@ -28,18 +28,21 @@ class HistogramClustering:
             mask = np.array(mask.long()).astype(np.uint8)
             hold_bbox = holds.boxes[idx].tensor.int()
 
+            # Average hsv  
             masked_image = hsv_image[mask > 0]
             h_mean = self.circular_mean(masked_image[..., 0]*2) / 360
             sv_mean = masked_image[..., 1:].mean(axis=0) / 255
             feature_vector = np.concatenate([[h_mean], sv_mean], 0) 
             samples.append(feature_vector)
 
+            # HSV Histogram
             # h_hist = cv2.calcHist([hsv_image[...,0]], [0], mask, [180], [0,180])
             # s_hist = cv2.calcHist([hsv_image[...,1]], [0], mask, [180], [0,256])
             # v_hist = cv2.calcHist([hsv_image[...,2]], [0], mask, [180], [0,256])
             # feature_vector = np.concatenate([h_hist, s_hist, v_hist], 0) / mask.sum()
             # samples.append(h_hist[..., 0] / mask.sum())
 
+            # Plot Histograms 
             # fig, axs = plt.subplots(1,2)
             # axs[0].imshow(image[..., ::-1][hold_bbox[0,1]:hold_bbox[0,3], hold_bbox[0,0]:hold_bbox[0,2]])
             # axs[1].plot(h_hist, color="b")
@@ -48,6 +51,7 @@ class HistogramClustering:
             # plt.xlim((0,180))
             # plt.show(block=True)
 
+        # clusterer = sklearn.cluster.DBSCAN()
         clusterer = sklearn.cluster.KMeans(n_clusters=7)
         self.clusterer = clusterer.fit(samples)
 
