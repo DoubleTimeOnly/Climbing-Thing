@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 from numpy.linalg import norm
-import scipy
+from scipy.spatial.distance import jensenshannon
+from scipy.stats import wasserstein_distance
 
 
 def l2_norm(array1: np.ndarray, array2: np.ndarray):
@@ -23,7 +24,6 @@ def cosine_similarity(array1: np.ndarray, array2: np.ndarray):
     dot_product = np.dot(array1.T, array2)
     similarity = dot_product / (norm(array1, ord=2) * norm(array2, ord=2))
     return similarity
-
 
 def compute_hsv_histogram(hsv_image, bins, mask, mode="cv2"):
     if isinstance(bins, int):

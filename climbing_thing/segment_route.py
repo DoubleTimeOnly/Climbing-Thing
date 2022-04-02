@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -114,6 +115,6 @@ def save_histogram_instances_with_idx():
 
 if __name__ == '__main__':
     # segment_route()
-    # compare_holds()
+    compare_holds()
     # save_instances_with_idx()
-    save_histogram_instances_with_idx()
+    # save_histogram_instances_with_idx()
