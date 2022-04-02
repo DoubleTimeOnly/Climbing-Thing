@@ -1,3 +1,4 @@
+import json
 import os
 import cv2
 import numpy as np
@@ -8,7 +9,7 @@ from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions
 from climbing_thing.route.compareholds import compute_cartesian_difference
 from climbing_thing.route.histogram_clustering import HistogramClustering
 from climbing_thing.route.hue_difference import HueDifference
-from climbing_thing.utils.distancemetrics import compute_hsv_histogram
+from climbing_thing.utils.distancemetrics import compute_histograms
 from climbing_thing.utils.image import imshow
 from climbing_thing.utils.performancemetrics import PerformanceMetrics
 
@@ -61,29 +62,37 @@ def init_climbnet():
 
 
 def compare_holds():
+    truth_file = "data/instance_images/test2/test2_clusters.json"
+    with open(truth_file, 'r') as file:
+        truth_list = json.load(file)
+
     image_file = "climbnet/test2.png"
     test_image = cv2.imread(image_file)
     model = init_climbnet()
     hold_instances = model(test_image)
 
-    all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="hsv_256")
+    all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="hsv_bin_accurate")
 
     for metric, distances in all_distances.items():
-        truth_0 = [0, 4, 6, 10, 19, 31, 39, 45, 55, 57, 59, 60, 63]
-        averages = {"f1": 0}
-        for hold_idx in truth_0:
-            # distances = all_distances["l2_norm"]
-            dists = distances[hold_idx, list(range(len(hold_instances)))]
+        print(f"\nMetric: {metric}")
+        csv_output = ""
+        for truth in truth_list:
+            print(f"\tColor: {truth['color']}")
+            truth_idxs = truth["holds"]
+            averages = {"f1": 0}
+            for hold_idx in truth_idxs:
+                dists = distances[hold_idx, list(range(len(hold_instances)))]
 
-            top_n = np.argsort(dists)[:len(truth_0)]
-            performance = PerformanceMetrics(truth=truth_0, prediction=set(top_n))
-            # print(f"hold {hold_idx} {metric}: {performance}")
+                top_n = np.argsort(dists)[:len(truth_idxs)]
+                performance = PerformanceMetrics(truth=truth_idxs, prediction=set(top_n))
 
-            averages["f1"] += performance.f1
+                averages["f1"] += performance.f1
 
-        for stat in averages:
-            averages[stat] /= len(truth_0)
-            print(f"{metric} average {stat}: {averages[stat]}")
+            for stat in averages:
+                averages[stat] /= len(truth_idxs)
+                print(f"\taverage {stat}: {averages[stat]}")
+                csv_output += f"{averages[stat]},"
+        print(csv_output.strip())
 
 
 def save_instances_with_idx():
@@ -114,7 +123,7 @@ def save_histogram_instances_with_idx():
     for idx, mask in enumerate(holds.masks):
         mask = mask.to("cpu")
         mask = np.array(mask.long()).astype(np.uint8)
-        (h_hist, h_edges), (s_hist, s_edges), (v_hist, v_edges) = compute_hsv_histogram(hsv_image, bins=180, mask=mask, mode="np")
+        (h_hist, h_edges), (s_hist, s_edges), (v_hist, v_edges) = compute_histograms(hsv_image, bins=180, mask=mask, mode="np")
 
 
         fig, ax = plt.subplots(1, 3)

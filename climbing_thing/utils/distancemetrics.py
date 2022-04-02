@@ -26,7 +26,7 @@ def cosine_similarity(array1: np.ndarray, array2: np.ndarray):
     return similarity
 
 
-def compute_hsv_histogram(hsv_image, bins, mask, max_values: Union[str, List] = None, mode="cv2"):
+def compute_histograms(hsv_image, bins, mask, max_values: Union[str, List] = None, mode="cv2"):
     if isinstance(bins, int):
         bins = [bins, bins, bins]
 
