@@ -66,7 +66,7 @@ def compare_holds():
     model = init_climbnet()
     hold_instances = model(test_image)
 
-    all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="lab")
+    all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="hsv_256")
 
     for metric, distances in all_distances.items():
         truth_0 = [0, 4, 6, 10, 19, 31, 39, 45, 55, 57, 59, 60, 63]

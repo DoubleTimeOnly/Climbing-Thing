@@ -34,26 +34,25 @@ def write_csv(csv_list: List, distance_name: str):
 
 
 def compute_cartesian_difference(route_image: np.ndarray, holds: Instances, color_space="hsv"):
-
-    bins_per_channel = 18
-    hsv_image = cv2.cvtColor(route_image, cv2.COLOR_BGR2HSV)
-    # cv2.imshow("Controller", np.random.random((200, 200)))
     color_spaces = {
-        "hsv": {"conversion": cv2.COLOR_BGR2HSV, "bins": 180},
-        "lab": {"conversion": cv2.COLOR_BGR2LAB, "bins": 256},
+        "hsv": {"conversion": cv2.COLOR_BGR2HSV, "bins": 180, "max_values": [180, 256, 256]},
+        "hsv_256": {"conversion": cv2.COLOR_BGR2HSV, "bins": 256, "max_values": [256, 256, 256]},
+        "lab": {"conversion": cv2.COLOR_BGR2LAB, "bins": 256, "max_values": [256, 256, 256]},
     }
+
     params = color_spaces[color_space]
+    image = cv2.cvtColor(route_image, params["conversion"])
 
     def hold_to_feature_vector(mask):
         mask = mask.to("cpu")
         mask = np.array(mask.long()).astype(np.uint8)
-        output = compute_hsv_histogram(hsv_image, bins=params["bins"], mask=mask, mode="np", max_values=color_space)
+        output = compute_hsv_histogram(image, bins=params["bins"], mask=mask, mode="np", max_values=params["max_values"])
         (h_hist, h_edges), (s_hist, s_edges), (v_hist, v_edges) = output
         n = 11
         kernel = [1/n for i in range(n)]
-        h_hist = np.convolve(h_hist, kernel)
-        s_hist = np.convolve(s_hist, kernel)
-        v_hist = np.convolve(v_hist, kernel)
+        h_hist = np.convolve(h_hist, kernel, mode="same")
+        s_hist = np.convolve(s_hist, kernel, mode="same")
+        v_hist = np.convolve(v_hist, kernel, mode="same")
         return np.concatenate([h_hist, s_hist, v_hist], axis=0)
 
     feature_vectors = np.array([hold_to_feature_vector(mask) for mask in holds.masks])
