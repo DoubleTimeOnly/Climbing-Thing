@@ -42,8 +42,8 @@ class ClimbNet:
     def __init__(self, model_path, categories_file=None, device="cpu"):
         self.categories_file = categories_file
         if categories_file is None:
-            self.categories_file = "climbnet/categories.json"
-        dataset_name = "climb_dataset"
+            self.categories_file = "climbing_thing/climbnet/categories.json"
+        dataset_name = "climbing_dataset"
         register_coco_instances(dataset_name, {}, self.categories_file, "")
         self.config = self.setup_config(model_params)
         self.config.MODEL.WEIGHTS = os.path.join(model_path)

@@ -8,7 +8,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy import stats
 from scipy.spatial.distance import pdist
-
+from torchvision import datasets, transforms
 from climbing_thing.climbnet import Instances
 from climbing_thing.utils.distancemetrics import compute_histograms, l2_norm, l1_norm, linf_norm, cosine_similarity
 
@@ -69,3 +69,24 @@ def compute_cartesian_difference(route_image: np.ndarray, holds: Instances, colo
         distances = pdist(feature_vectors, **kwargs)
         computed_distances[metric] = distance.squareform(distances)
     return computed_distances
+
+def metric_distances(model, route_image, holds: Instances):
+    def mask_to_hold_image(bbox):
+        # get_masked_image(route_image, mask)
+        hold_bbox = bbox.int()
+        return cv2.resize(route_image[hold_bbox[1]:hold_bbox[3], hold_bbox[0]:hold_bbox[2]], (28,28))
+
+    transform = transforms.Compose(
+        [transforms.Normalize((0.1307,0.1307,0.1307), (0.3081,0.3081,0.3081))]
+    )
+    hold_images = [mask_to_hold_image(bbox) for bbox in holds.boxes]
+    holds_tensor = torch.from_numpy(np.stack(hold_images)).to(torch.float32) / 255
+    holds_tensor = holds_tensor.permute(0,3,1,2)
+    holds_tensor = transform(holds_tensor)
+    output_tensor = model(holds_tensor).detach().numpy()
+    computed_distances = {}
+    for metric, kwargs in DISTANCES.items():
+        distances = pdist(output_tensor, **kwargs)
+        computed_distances[metric] = distance.squareform(distances)
+    return computed_distances
+     
