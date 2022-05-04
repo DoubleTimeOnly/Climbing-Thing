@@ -2,6 +2,7 @@ from typing import List
 
 import cv2
 import numpy as np
+import torch
 
 
 def imshow(window_name: str, image: np.ndarray, scale: float = 1.0, delay=100):
@@ -34,3 +35,17 @@ def hstack(images: List[np.ndarray]):
 
 def float_to_int(array: np.ndarray):
     return (255 * array).astype(np.uint8)
+
+
+def crop_image(image: torch.Tensor, bbox: torch.Tensor) -> torch.Tensor:
+    """Return a view of an image cropped only to a bounding box
+    bbox (torch.Tensor): topleft_botright format
+    """
+    hold_bbox = bbox.int()
+    return image[hold_bbox[1]:hold_bbox[3], hold_bbox[0]:hold_bbox[2]]
+
+
+def mask_image(image: torch.Tensor, mask: torch.Tensor):
+    mask = np.array(mask.long()).astype(np.uint8)
+    image[mask == 0] = 0
+    return image
