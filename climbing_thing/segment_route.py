@@ -58,24 +58,24 @@ def segment_route():
 
 
 def init_climbnet():
-    default_weights = "climbing_thing/climbnet/weights/model_d2_R_50_FPN_3x.pth"
+    default_weights = os.path.join(ROOT_DIR, "climbnet/weights/model_d2_R_50_FPN_3x.pth")
     model = ClimbNet(model_path=default_weights, device="cpu")
     return model
 
 
 def compare_holds():
-    truth_file = "climbing_thing/data/instance_images/test2/test2_clusters.json"
+    truth_file = os.path.join(ROOT_DIR, "data/instance_images/test2/test2_clusters.json")
     with open(truth_file, 'r') as file:
         truth_list = json.load(file)
 
-    image_file = "climbing_thing/climbnet/test2.png"
+    image_file = os.path.join(ROOT_DIR, "climbnet/test2.png")
     test_image = cv2.imread(image_file)
     model = init_climbnet()
     hold_instances = model(test_image)
 
     # all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="hsv_bin_accurate")
     
-    state_dict = torch.load("climbing_thing/metric_learning/weights.pth")
+    state_dict = torch.load(os.path.join(ROOT_DIR, "metric_learning/weights.pth"))
     metric_model = Net()
     metric_model.load_state_dict(state_dict)
     metric_model.eval()

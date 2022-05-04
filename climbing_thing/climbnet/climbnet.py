@@ -9,6 +9,7 @@ from detectron2.data import MetadataCatalog
 from detectron2.data.datasets import register_coco_instances
 from detectron2.engine import DefaultPredictor
 from .configs.model_params import model_params
+from .. import ROOT_DIR
 
 
 class Instances:
@@ -42,7 +43,7 @@ class ClimbNet:
     def __init__(self, model_path, categories_file=None, device="cpu"):
         self.categories_file = categories_file
         if categories_file is None:
-            self.categories_file = "climbing_thing/climbnet/categories.json"
+            self.categories_file = os.path.join(ROOT_DIR, "climbnet/categories.json")
         dataset_name = "climbing_dataset"
         register_coco_instances(dataset_name, {}, self.categories_file, "")
         self.config = self.setup_config(model_params)
