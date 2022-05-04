@@ -85,6 +85,7 @@ def compare_holds():
     for metric, distances in all_distances.items():
         print(f"\nMetric: {metric}")
         csv_output = ""
+        metric_average = {"f1": []}
         for truth in truth_list:
             print(f"\tColor: {truth['color']}")
             truth_idxs = truth["holds"]
@@ -101,6 +102,9 @@ def compare_holds():
                 averages[stat] /= len(truth_idxs)
                 print(f"\taverage {stat}: {averages[stat]}")
                 csv_output += f"{averages[stat]},"
+            metric_average["f1"].append(averages["f1"])
+        mean_average_f1 = np.mean(metric_average["f1"])
+        csv_output += f"{mean_average_f1}"
         print(csv_output.strip())
 
 

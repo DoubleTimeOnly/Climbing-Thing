@@ -60,8 +60,9 @@ if __name__ == "__main__":
 
     transform = transforms.Compose([
         transforms.Resize((28,28)),
-        transforms.Normalize(mean=[0.2617867887020111, 0.24093492329120636, 0.21575430035591125], std=[0.22014980018138885, 0.20301464200019836, 0.1867351531982422]
-),
+        transforms.Normalize(mean=[0.2617867887020111, 0.24093492329120636, 0.21575430035591125], std=[0.22014980018138885, 0.20301464200019836, 0.1867351531982422]),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomVerticalFlip(p=0.5),
     ])
 
     image_dir = os.path.join(ROOT_DIR, "data/instance_images/test2_masked/")
