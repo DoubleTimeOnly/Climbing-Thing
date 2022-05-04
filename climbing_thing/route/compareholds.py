@@ -11,6 +11,7 @@ from scipy.spatial.distance import pdist
 from torchvision import datasets, transforms
 from climbing_thing.climbnet import Instances
 from climbing_thing.utils.distancemetrics import compute_histograms, l2_norm, l1_norm, linf_norm, cosine_similarity
+from climbing_thing.utils.image import crop_image, mask_image
 
 DISTANCES = {
     'l1_norm': {"metric": "minkowski", "p": 1},
@@ -19,12 +20,6 @@ DISTANCES = {
     'jenssen shannon': {"metric": "jensenshannon"},
     'wasserstein': {"metric": stats.wasserstein_distance},
 }
-
-
-def get_masked_image(image: np.ndarray, mask: torch.tensor):
-    mask = np.array(mask.long()).astype(np.uint8)
-    masked_image = image[mask > 0]
-    return masked_image
 
 
 def write_csv(csv_list: List, distance_name: str):
@@ -71,19 +66,24 @@ def compute_cartesian_difference(route_image: np.ndarray, holds: Instances, colo
     return computed_distances
 
 def metric_distances(model, route_image, holds: Instances):
-    def mask_to_hold_image(bbox):
-        # get_masked_image(route_image, mask)
-        hold_bbox = bbox.int()
-        return cv2.resize(route_image[hold_bbox[1]:hold_bbox[3], hold_bbox[0]:hold_bbox[2]], (28,28))
+    def mask_to_hold_image(hold_idx):
+        bbox = holds.boxes[hold_idx].tensor[0]
+        mask = holds.masks[hold_idx]
+        hold_image = crop_image(route_image, bbox)
+        mask = crop_image(mask, bbox)
+        masked_hold_image = mask_image(hold_image, mask)
+        return cv2.resize(masked_hold_image, dsize=(28, 28))
 
-    transform = transforms.Compose(
-        [transforms.Normalize((0.1307,0.1307,0.1307), (0.3081,0.3081,0.3081))]
-    )
-    hold_images = [mask_to_hold_image(bbox) for bbox in holds.boxes]
+    transform = transforms.Compose([
+        transforms.Normalize(mean=[0.2617867887020111, 0.24093492329120636, 0.21575430035591125], std=[0.22014980018138885, 0.20301464200019836, 0.1867351531982422]
+),
+    ])
+    hold_images = [mask_to_hold_image(hold_idx) for hold_idx, _ in enumerate(holds.boxes)]
     holds_tensor = torch.from_numpy(np.stack(hold_images)).to(torch.float32) / 255
     holds_tensor = holds_tensor.permute(0,3,1,2)
     holds_tensor = transform(holds_tensor)
     output_tensor = model(holds_tensor).detach().numpy()
+
     computed_distances = {}
     for metric, kwargs in DISTANCES.items():
         distances = pdist(output_tensor, **kwargs)
