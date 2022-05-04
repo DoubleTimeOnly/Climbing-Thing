@@ -5,14 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 
+from climbing_thing import ROOT_DIR
 from climbing_thing.climbnet import ClimbNet
 from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions
-from climbing_thing.metric_learning.metric_learning import Net
-from climbing_thing.route.compareholds import compute_cartesian_difference, metric_distances
+from climbing_thing.metric_learning.models import Net
+from climbing_thing.route.compareholds import metric_distances
 from climbing_thing.route.histogram_clustering import HistogramClustering
 from climbing_thing.route.hue_difference import HueDifference
 from climbing_thing.utils.distancemetrics import compute_histograms
-from climbing_thing.utils.image import imshow
+from climbing_thing.utils.image import imshow, crop_image, mask_image
 from climbing_thing.utils.performancemetrics import PerformanceMetrics
 
 route_rgb_colors = {
@@ -109,13 +110,17 @@ def save_instances_with_idx():
     model = init_climbnet()
     holds = model(test_image)
 
-    image_folder = "data/instance_images/test2"
+    image_folder = os.path.join(ROOT_DIR, "data/instance_images/test2_masked")
+    os.makedirs(image_folder, exist_ok=True)
     cv2.imwrite(f"{image_folder}/test2.png", test_image)
 
-    for idx, mask in enumerate(holds.masks):
-        hold_bbox = holds.boxes[idx].tensor.int()
-        hold_image = test_image[hold_bbox[0, 1]:hold_bbox[0, 3], hold_bbox[0, 0]:hold_bbox[0, 2]]
-        cv2.imwrite(f"{image_folder}/hold_{idx}.png", hold_image)
+    for hold_idx, mask in enumerate(holds.masks):
+        bbox = holds.boxes[hold_idx].tensor[0]
+        mask = holds.masks[hold_idx]
+        hold_image = crop_image(test_image, bbox)
+        mask = crop_image(mask, bbox)
+        masked_hold_image = mask_image(hold_image, mask)
+        cv2.imwrite(f"{image_folder}/hold_{hold_idx}.png", masked_hold_image)
 
 
 def save_histogram_instances_with_idx():
