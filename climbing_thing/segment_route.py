@@ -5,14 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 
+from climbing_thing import ROOT_DIR
 from climbing_thing.climbnet import ClimbNet
 from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions
-from climbing_thing.metric_learning.metric_learning import Net
-from climbing_thing.route.compareholds import compute_cartesian_difference, metric_distances
+from climbing_thing.metric_learning.models import Net
+from climbing_thing.route.compareholds import metric_distances
 from climbing_thing.route.histogram_clustering import HistogramClustering
 from climbing_thing.route.hue_difference import HueDifference
 from climbing_thing.utils.distancemetrics import compute_histograms
-from climbing_thing.utils.image import imshow
+from climbing_thing.utils.image import imshow, crop_image, mask_image
 from climbing_thing.utils.performancemetrics import PerformanceMetrics
 
 route_rgb_colors = {
@@ -58,24 +59,24 @@ def segment_route():
 
 
 def init_climbnet():
-    default_weights = "climbing_thing/climbnet/weights/model_d2_R_50_FPN_3x.pth"
+    default_weights = os.path.join(ROOT_DIR, "climbnet/weights/model_d2_R_50_FPN_3x.pth")
     model = ClimbNet(model_path=default_weights, device="cpu")
     return model
 
 
 def compare_holds():
-    truth_file = "climbing_thing/data/instance_images/test2/test2_clusters.json"
+    truth_file = os.path.join(ROOT_DIR, "data/instance_images/test2/test2_clusters.json")
     with open(truth_file, 'r') as file:
         truth_list = json.load(file)
 
-    image_file = "climbing_thing/climbnet/test2.png"
+    image_file = os.path.join(ROOT_DIR, "climbnet/test2.png")
     test_image = cv2.imread(image_file)
     model = init_climbnet()
     hold_instances = model(test_image)
 
     # all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="hsv_bin_accurate")
     
-    state_dict = torch.load("climbing_thing/metric_learning/weights.pth")
+    state_dict = torch.load(os.path.join(ROOT_DIR, "metric_learning/weights.pth"))
     metric_model = Net()
     metric_model.load_state_dict(state_dict)
     metric_model.eval()
@@ -84,6 +85,7 @@ def compare_holds():
     for metric, distances in all_distances.items():
         print(f"\nMetric: {metric}")
         csv_output = ""
+        metric_average = {"f1": []}
         for truth in truth_list:
             print(f"\tColor: {truth['color']}")
             truth_idxs = truth["holds"]
@@ -100,6 +102,9 @@ def compare_holds():
                 averages[stat] /= len(truth_idxs)
                 print(f"\taverage {stat}: {averages[stat]}")
                 csv_output += f"{averages[stat]},"
+            metric_average["f1"].append(averages["f1"])
+        mean_average_f1 = np.mean(metric_average["f1"])
+        csv_output += f"{mean_average_f1}"
         print(csv_output.strip())
 
 
@@ -109,13 +114,17 @@ def save_instances_with_idx():
     model = init_climbnet()
     holds = model(test_image)
 
-    image_folder = "data/instance_images/test2"
+    image_folder = os.path.join(ROOT_DIR, "data/instance_images/test2_masked")
+    os.makedirs(image_folder, exist_ok=True)
     cv2.imwrite(f"{image_folder}/test2.png", test_image)
 
-    for idx, mask in enumerate(holds.masks):
-        hold_bbox = holds.boxes[idx].tensor.int()
-        hold_image = test_image[hold_bbox[0, 1]:hold_bbox[0, 3], hold_bbox[0, 0]:hold_bbox[0, 2]]
-        cv2.imwrite(f"{image_folder}/hold_{idx}.png", hold_image)
+    for hold_idx, mask in enumerate(holds.masks):
+        bbox = holds.boxes[hold_idx].tensor[0]
+        mask = holds.masks[hold_idx]
+        hold_image = crop_image(test_image, bbox)
+        mask = crop_image(mask, bbox)
+        masked_hold_image = mask_image(hold_image, mask)
+        cv2.imwrite(f"{image_folder}/hold_{hold_idx}.png", masked_hold_image)
 
 
 def save_histogram_instances_with_idx():
