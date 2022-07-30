@@ -72,7 +72,7 @@ def test(train_set, test_set, model, accuracy_calculator):
 
 if __name__ == "__main__":
 
-    device = torch.device("cpu")
+    device = torch.device("cuda")
 
     transform = transforms.Compose(
         [transforms.Resize((28,28)), transforms.Normalize((0.1307,0.1307,0.1307), (0.3081,0.3081,0.3081))]
