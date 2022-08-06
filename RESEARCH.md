@@ -59,7 +59,9 @@ Given all holds on a wall, assign each hold to their respective route
             * 
         * ##### DBSCAN
             * 
-* #### Hammer time
+* #### Hammer time / Atom Bomb
     * #### Weakly supervised clustering network
     * #### Metric learning?
     * Support Vector Machine (SVM)
+    * #### Mennard (aka CLIP)
+        * Try removing background. This actually sucks a lot. Does great with background, mixes up a ton of obvious colors with masking background.
