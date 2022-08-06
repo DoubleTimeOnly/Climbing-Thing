@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from climbing_thing import ROOT_DIR
-from climbing_thing.climbnet import ClimbNet
+from climbing_thing.climbnet import ClimbNet, Instances
 from climbing_thing.climbnet.utils.visualizer import draw_instance_predictions
 from climbing_thing.metric_learning.models import Net
 from climbing_thing.route.compareholds import metric_distances
@@ -15,6 +15,8 @@ from climbing_thing.route.hue_difference import HueDifference
 from climbing_thing.utils.distancemetrics import compute_histograms
 from climbing_thing.utils.image import imshow, crop_image, mask_image
 from climbing_thing.utils.performancemetrics import PerformanceMetrics
+import climbing_thing.utils.image as imutils
+
 
 route_rgb_colors = {
     "pink": (183, 77, 99),
@@ -64,48 +66,50 @@ def init_climbnet():
     return model
 
 
-def compare_holds():
-    truth_file = os.path.join(ROOT_DIR, "data/instance_images/test2/test2_clusters.json")
-    with open(truth_file, 'r') as file:
-        truth_list = json.load(file)
+def get_route_of_same_color_or_index():
+    from climbing_thing.route.groupholds import segment_routes
 
     image_file = os.path.join(ROOT_DIR, "climbnet/test2.png")
-    test_image = cv2.imread(image_file)
-    model = init_climbnet()
-    hold_instances = model(test_image)
+    wall_image = cv2.imread(image_file)
 
-    # all_distances = compute_cartesian_difference(test_image, hold_instances, color_space="hsv_bin_accurate")
-    
-    state_dict = torch.load(os.path.join(ROOT_DIR, "metric_learning/weights.pth"))
-    metric_model = Net()
-    metric_model.load_state_dict(state_dict)
-    metric_model.eval()
-    all_distances = metric_distances(metric_model, test_image, hold_instances)
+    climbnet = init_climbnet()
 
-    for metric, distances in all_distances.items():
-        print(f"\nMetric: {metric}")
-        csv_output = ""
-        metric_average = {"f1": []}
-        for truth in truth_list:
-            print(f"\tColor: {truth['color']}")
-            truth_idxs = truth["holds"]
-            averages = {"f1": 0}
-            for hold_idx in truth_idxs:
-                dists = distances[hold_idx, list(range(len(hold_instances)))]
+    holds = climbnet(wall_image)
 
-                top_n = np.argsort(dists)[:len(truth_idxs)]
-                performance = PerformanceMetrics(truth=truth_idxs, prediction=set(top_n))
+    routes = segment_routes(wall_image, holds)
 
-                averages["f1"] += performance.f1
+    routes = {c: Instances(holds.instances[hold_idxs]) for c, hold_idxs in routes.items()}
 
-            for stat in averages:
-                averages[stat] /= len(truth_idxs)
-                print(f"\taverage {stat}: {averages[stat]}")
-                csv_output += f"{averages[stat]},"
-            metric_average["f1"].append(averages["f1"])
-        mean_average_f1 = np.mean(metric_average["f1"])
-        csv_output += f"{mean_average_f1}"
-        print(csv_output.strip())
+    for color, route in routes.items():
+        binary_mask = route.combine_masks()
+        masked_route = imutils.mask(wall_image, binary_mask)
+        imutils.imshow("route", masked_route)
+
+    # run mennard -> each hold image
+    # get the class (color) of each hold
+    # combine the masks of same class/color
+    # apply mask to wall image to get segmented route image
+    # just the holds, holds + wall = wall image - irrelevant holds (latter is good)
+    # output -> route_classifier_model() -> grade
+    # holds + wall, wall image + mask (of just holds)
+    #                   ^ is the ideal scenario
+    #                       how do you integrate the mask into the model?
+    # wall image -> a few layers of network -> you get some input/4xinput/4xdepth feature map
+    # you literally mask out some values -> resize the mask as well
+    # why we might want to consider just the holds
+        # you can take advantage of current architectures
+        # you might not have to train as many images
+    # example: take CLIP's RN50 classifier and use those weights as a base
+    # finetune/train RN50 on our classification images
+
+    # Today
+    # build the thing where we feed
+    # we get routes from hold instances
+        # labeling
+        # eventual final goal
+
+    # final goal?
+    # choose some route through some method -> returns the grade of that route
 
 
 def save_instances_with_idx():
@@ -159,6 +163,6 @@ def save_histogram_instances_with_idx():
 
 if __name__ == '__main__':
     # segment_route()
-    compare_holds()
     # save_instances_with_idx()
     # save_histogram_instances_with_idx()
+    get_route_of_same_color_or_index()
