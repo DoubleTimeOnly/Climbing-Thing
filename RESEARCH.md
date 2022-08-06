@@ -65,3 +65,4 @@ Given all holds on a wall, assign each hold to their respective route
     * Support Vector Machine (SVM)
     * #### Mennard (aka CLIP)
         * Try removing background. This actually sucks a lot. Does great with background, mixes up a ton of obvious colors with masking background.
+        * after masking try adding our own background (e.g. a striped background -> prompt becomes "a x color object on a striped background")

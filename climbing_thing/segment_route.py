@@ -68,8 +68,9 @@ def init_climbnet():
 
 def get_route_of_same_color_or_index():
     from climbing_thing.route.groupholds import segment_routes
-
-    image_file = os.path.join(ROOT_DIR, "climbnet/test2.png")
+    # image_path = "climbnet/test2.png"
+    image_path = "./data/images/20220207_215203.jpg"
+    image_file = os.path.join(ROOT_DIR, image_path)
     wall_image = cv2.imread(image_file)
 
     climbnet = init_climbnet()
